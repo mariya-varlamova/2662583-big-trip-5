@@ -33,7 +33,7 @@ export default class Model {
     return {
       id: 0,
       type: 'flight',
-      destination: null,
+      destinationId: null,
       startDate: new Date(),
       endDate: new Date(),
       price: 0,

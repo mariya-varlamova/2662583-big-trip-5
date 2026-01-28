@@ -1,5 +1,6 @@
 import { getRandomArrayElement, getRandomInt, getRandomDate } from '../utils/utils.js';
 import { TYPES, CITIES, OFFER_TITLES, LOREM_IPSUM } from '../constants/constants.js';
+import { dayjs } from '../utils/utils.js';
 
 function generateOffers() {
   const offers = [];
@@ -41,7 +42,7 @@ function generateRoutePoint(id) {
   const destinationId = getRandomInt(1, 10);
   const startDate = getRandomDate();
   const durationHours = getRandomInt(1, 72);
-  const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+  const endDate = dayjs(startDate).add(durationHours, 'hour').toDate();
 
   return {
     id,

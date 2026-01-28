@@ -1,6 +1,6 @@
 import { createElement } from '../render.js';
-import { formatDate, formatDuration } from '../utils/utils.js';
-import { MONTHS, DateFormat } from '../constants/constants.js';
+import { formatDayAttr, formatDateTimeAttr, formatTime, formatDuration, formatMonthDay } from '../utils/utils.js';
+// import { DateFormat } from '../constants/constants.js';
 
 export default class RoutePointView {
   constructor(routePoint, destination, offers) {
@@ -12,20 +12,19 @@ export default class RoutePointView {
   getTemplate() {
     const { type, startDate, endDate, price, isFavorite } = this.routePoint;
     const destinationName = this.destination ? this.destination.name : '';
-    const formattedDate = this.formatMonthDay(startDate);
     return `
       <li class="trip-events__item">
         <div class="event">
-          <time class="event__date" datetime="${formatDate(startDate, DateFormat.DAY_ATTR)}">${formattedDate}</time>
+          <time class="event__date" datetime="${formatDayAttr(startDate)}"> ${formatMonthDay(startDate)}</time>
           <div class="event__type">
             <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
           </div>
           <h3 class="event__title">${type.charAt(0).toUpperCase() + type.slice(1)} ${destinationName}</h3>
           <div class="event__schedule">
             <p class="event__time">
-              <time class="event__start-time" datetime="${formatDate(startDate, DateFormat.DATETIME_ATTR)}">${formatDate(startDate, DateFormat.TIME)}</time>
+              <time class="event__start-time" datetime="${formatDateTimeAttr(startDate)}"> ${formatTime(startDate)}</time>
               &mdash;
-              <time class="event__end-time" datetime="${formatDate(endDate, DateFormat.DATETIME_ATTR)}">${formatDate(endDate, DateFormat.TIME)}</time>
+              <time class="event__end-time" datetime="${formatDateTimeAttr(endDate)}">${formatTime(endDate)}</time>
             </p>
             <p class="event__duration">${formatDuration(startDate, endDate)}</p>
           </div>
@@ -48,15 +47,6 @@ export default class RoutePointView {
     `;
   }
 
-  formatMonthDay(date) {
-    if (!date){
-      return '';
-    }
-
-    const day = date.getDate();
-    const month = MONTHS[date.getMonth()];
-    return `${month} ${day}`;
-  }
 
   getOffersTemplate() {
     if (!this.offers || this.offers.length === 0) {
