@@ -1,51 +1,58 @@
-import { createElement } from '../render.js';
 import { formatDate } from '../utils/utils.js';
 import { TYPES } from '../constants/constants.js';
-export default class EditFormView {
+import AbstractView from '../framework/view/abstract-view.js';
+export default class EditFormView extends AbstractView {
+  #routePoint = null;
+  #destinations = [];
+  #offerGroups = {};
+  #isNew = false;
+  #handleSubmit = null;
+  #handleClose = null;
+
   constructor(routePoint = null, destinations = [], offerGroups = {}) {
-    this.routePoint = routePoint;
-    this.destinations = destinations;
-    this.offerGroups = offerGroups;
-    this.isNew = !routePoint;
+    super();
+    this.#routePoint = routePoint;
+    this.#destinations = destinations;
+    this.#offerGroups = offerGroups;
+    this.#isNew = !routePoint;
   }
 
-  getTemplate() {
-    const point = this.routePoint || {
+  get template() {
+    const point = this.#routePoint || {
       type: 'flight',
-      destination: null,
+      destinationId: null,
       startDate: new Date(),
       endDate: new Date(),
       price: 0,
       offers: [],
       isFavorite: false
     };
-
     const destination = point.destinationId
-      ? this.destinations.find((d) => d.id === point.destinationId)
+      ? this.#destinations.find((d) => d.id === point.destinationId)
       : null;
 
-    const offersForType = this.offerGroups[point.type] || [];
+    const offersForType = this.#offerGroups[point.type] || [];
     const selectedOffers = point.offers || [];
 
     return `
 <li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
     <header class="event__header">
-      ${this.getTypeSelectorTemplate(point.type)}
-      ${this.getDestinationTemplate(point.type, destination)}
-      ${this.getTimeTemplate(point.startDate, point.endDate)}
-      ${this.getPriceTemplate(point.price)}
-      ${this.getButtonsTemplate()}
+      ${this.#getTypeSelectorTemplate(point.type)}
+      ${this.#getDestinationTemplate(point.type, destination)}
+      ${this.#getTimeTemplate(point.startDate, point.endDate)}
+      ${this.#getPriceTemplate(point.price)}
+      ${this.#getButtonsTemplate()}
     </header>
     <section class="event__details">
-       ${offersForType.length > 0 ? this.getOffersTemplate(offersForType, selectedOffers) : ''}
-        ${destination && destination.description ? this.getDestinationDetailsTemplate(destination) : ''}
+       ${offersForType.length > 0 ? this.#getOffersTemplate(offersForType, selectedOffers) : ''}
+        ${destination && destination.description ? this.#getDestinationDetailsTemplate(destination) : ''}
     </section>
   </form>
 </li>`;
   }
 
-  getTypeSelectorTemplate(currentType) {
+  #getTypeSelectorTemplate(currentType) {
     const typesHtml = TYPES.map((type) => `
       <div class="event__type-item">
         <input id="event-type-${type}-1" class="event__type-input visually-hidden" type="radio"
@@ -73,8 +80,8 @@ export default class EditFormView {
     `;
   }
 
-  getDestinationTemplate(currentType, destination) {
-    const uniqueCities = [...new Set(this.destinations.map((d) => d.name))];
+  #getDestinationTemplate(currentType, destination) {
+    const uniqueCities = [...new Set(this.#destinations.map((d) => d.name))];
     const destinationsOptions = uniqueCities.map((city) =>`<option value="${city}">${city}</option>`).join('');
 
     return `
@@ -94,7 +101,7 @@ export default class EditFormView {
     `;
   }
 
-  getTimeTemplate(startDate, endDate) {
+  #getTimeTemplate(startDate, endDate) {
     return `
       <div class="event__field-group event__field-group--time">
         <label class="visually-hidden" for="event-start-time-1">From</label>
@@ -110,7 +117,20 @@ export default class EditFormView {
     `;
   }
 
-  getPriceTemplate(price) {
+  setFormSubmitHandler(callback) {
+    this.#handleSubmit = callback;
+    this.element.querySelector('form')
+      .addEventListener('submit', this.#handleSubmit);
+  }
+
+  setFormCloseHandler(callback) {
+    this.#handleClose = callback;
+    this.element.querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#handleClose);
+  }
+
+
+  #getPriceTemplate(price) {
     return `
       <div class="event__field-group event__field-group--price">
         <label class="event__label" for="event-price-1">
@@ -124,8 +144,8 @@ export default class EditFormView {
     `;
   }
 
-  getButtonsTemplate() {
-    if (this.isNew) {
+  #getButtonsTemplate() {
+    if (this.#isNew) {
       return `
         <button class="event__save-btn btn btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
@@ -141,7 +161,7 @@ export default class EditFormView {
     `;
   }
 
-  getOffersTemplate(availableOffers, selectedOffers) {
+  #getOffersTemplate(availableOffers, selectedOffers) {
     const offersHtml = availableOffers.map((offer) => `
       <div class="event__offer-selector">
         <input class="event__offer-checkbox visually-hidden"
@@ -168,7 +188,7 @@ export default class EditFormView {
     `;
   }
 
-  getDestinationDetailsTemplate(destination) {
+  #getDestinationDetailsTemplate(destination) {
     const picturesHtml = destination.pictures.map((pic) =>
       `<img class="event__photo" src="${pic.src}" alt="${pic.description}">`
     ).join('');
@@ -186,13 +206,6 @@ export default class EditFormView {
         ` : ''}
       </section>
     `;
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
   }
 
 }

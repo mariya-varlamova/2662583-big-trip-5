@@ -1,18 +1,23 @@
-import { createElement } from '../render.js';
 import { formatDate, formatDuration } from '../utils/utils.js';
 import { MONTHS, DateFormat } from '../constants/constants.js';
+import AbstractView from '../framework/view/abstract-view.js';
+export default class RoutePointView extends AbstractView {
+  #routePoint = null;
+  #destination = null;
+  #offers = [];
+  #editClickHandler = null;
 
-export default class RoutePointView {
   constructor(routePoint, destination, offers) {
-    this.routePoint = routePoint;
-    this.destination = destination;
-    this.offers = offers;
+    super();
+    this.#routePoint = routePoint;
+    this.#destination = destination;
+    this.#offers = offers;
   }
 
-  getTemplate() {
-    const { type, startDate, endDate, price, isFavorite } = this.routePoint;
-    const destinationName = this.destination ? this.destination.name : '';
-    const formattedDate = this.formatMonthDay(startDate);
+  get template() {
+    const { type, startDate, endDate, price, isFavorite } = this.#routePoint;
+    const destinationName = this.#destination ? this.#destination.name : '';
+    const formattedDate = this.#formatMonthDay(startDate);
     return `
       <li class="trip-events__item">
         <div class="event">
@@ -33,7 +38,7 @@ export default class RoutePointView {
             &euro;&nbsp;<span class="event__price-value">${price}</span>
           </p>
           <h4 class="visually-hidden">Offers:</h4>
-          ${this.getOffersTemplate()}
+          ${this.#getOffersTemplate()}
           <button class="event__favorite-btn ${isFavorite ? 'event__favorite-btn--active' : ''}" type="button">
             <span class="visually-hidden">Add to favorite</span>
             <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
@@ -48,7 +53,12 @@ export default class RoutePointView {
     `;
   }
 
-  formatMonthDay(date) {
+  setEditClickHandler(callback) {
+    this.#editClickHandler = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#editClickHandler);
+  }
+
+  #formatMonthDay(date) {
     if (!date){
       return '';
     }
@@ -58,12 +68,12 @@ export default class RoutePointView {
     return `${month} ${day}`;
   }
 
-  getOffersTemplate() {
-    if (!this.offers || this.offers.length === 0) {
+  #getOffersTemplate() {
+    if (!this.#offers || this.#offers.length === 0) {
       return '<h4 class="visually-hidden">Offers:</h4>';
     }
 
-    const offersHtml = this.offers.slice(0, 3).map((offer) => {
+    const offersHtml = this.#offers.slice(0, 3).map((offer) => {
       const price = offer.price || '';
       return `
         <li class="event__offer">
@@ -81,14 +91,4 @@ export default class RoutePointView {
     `;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
-  }
 }
