@@ -37,7 +37,7 @@ export default class Presenter {
     const tripEventsListView = new ListView();
     render(tripEventsListView, this.#listContainer);
 
-    const routePoints = this.#model.getRoutePoints();
+    const routePoints = this.#model.routePoints;
 
     routePoints.forEach((routePoint) => {
       this.#renderRoutePoint(routePoint, tripEventsListView.element);
@@ -56,8 +56,8 @@ export default class Presenter {
 
     const editFormComponent = new EditFormView(
       routePoint,
-      this.#model.getDestinations(),
-      this.#model.getOfferGroups()
+      this.#model.destinations,
+      this.#model.offerGroups
     );
 
     this.#routePointComponents.set(routePoint.id, routePointComponent);

@@ -24,18 +24,6 @@ export default class Model {
     return this.#offerGroups;
   }
 
-  getDestinations() {
-    return this.#destinations;
-  }
-
-  getRoutePoints() {
-    return this.#routePoints;
-  }
-
-  getOfferGroups() {
-    return this.#offerGroups;
-  }
-
   getOffersByType(type) {
     return this.#offerGroups[type] || [];
   }
