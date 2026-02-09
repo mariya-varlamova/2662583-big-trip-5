@@ -4,7 +4,7 @@ import ListView from '../view/list-view.js';
 import { render } from '../framework/render.js';
 import Model from '../model/model.js';
 import RoutePointPresenter from './point-presenter.js';
-export default class Presenter {
+export default class TripPresenter {
   #filtersContainer = null;
   #listContainer = null;
   #model = null;

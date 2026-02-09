@@ -97,25 +97,15 @@ export default class RoutePointPresenter {
       this.#handleFavoriteClick();
     });
 
-    if (this.#listItem) {
-      const isFormOpen = this.#editFormComponent && this.#editFormComponent.element &&
-      this.#editFormComponent.element.parentElement === this.#listItem;
-      if (isFormOpen) {
-        replace(this.#routePointComponent, this.#editFormComponent);
-      } else if (prevComponent && prevComponent.element && prevComponent.element.parentElement) {
-        replace(this.#routePointComponent, prevComponent);
-      } else {
-        render(this.#routePointComponent, this.#listItem);
-      }
+    if (this.#editFormComponent.element?.parentElement === this.#listItem) {
+      replace(this.#routePointComponent, this.#editFormComponent);
+    } else if (prevComponent) {
+      replace(this.#routePointComponent, prevComponent);
     }
   }
 
   #replacePointToForm() {
-    if (!this.#routePointComponent ||
-        !this.#editFormComponent ||
-        !this.#routePointComponent.element ||
-        !this.#routePointComponent.element.parentElement ||
-        this.#routePointComponent.element.parentElement !== this.#listItem) {
+    if (this.#routePointComponent.element?.parentElement !== this.#listItem) {
       return;
     }
 
@@ -129,11 +119,7 @@ export default class RoutePointPresenter {
   }
 
   #replaceFormToPoint(){
-    if (!this.#routePointComponent ||
-        !this.#editFormComponent ||
-        !this.#editFormComponent.element ||
-        !this.#editFormComponent.element.parentElement ||
-        this.#editFormComponent.element.parentElement !== this.#listItem) {
+    if (this.#editFormComponent.element?.parentElement !== this.#listItem) {
       return;
     }
     replace(this.#routePointComponent, this.#editFormComponent);
