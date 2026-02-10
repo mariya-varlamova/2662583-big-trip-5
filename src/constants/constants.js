@@ -39,3 +39,13 @@ export const DateFormat = {
   HUMAN_TIME: 'HH:mm',
   HUMAN_FULL: 'YYYY-MM-DDTHH:mm:ss'
 };
+
+export const SortType = {
+  DAY: 'day',
+  TIME: 'time',
+  PRICE: 'price',
+  EVENT: 'event',
+  OFFER: 'offer'
+};
+
+export const DEFAULT_SORT_TYPE = SortType.PRICE;
