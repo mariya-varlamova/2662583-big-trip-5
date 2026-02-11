@@ -1,4 +1,5 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import { SortType } from '../constants/constants.js';
 export default class SortView extends AbstractView {
   #currentSortType = null;
   #onSortTypeChange = null;
@@ -12,10 +13,10 @@ export default class SortView extends AbstractView {
   }
 
   get template() {
-    const createSortItemTemplate = (type, label, isDisabled = false, isDefault = false) => {
+    const createSortItemTemplate = (type, label, isDisabled = false) => {
       const isChecked = type === this.#currentSortType;
       const disabledAttr = isDisabled ? 'disabled' : '';
-      const checkedAttr = isChecked || (!this.#currentSortType && isDefault) ? 'checked' : '';
+      const checkedAttr = isChecked ? 'checked' : '';
       return `
         <div class="trip-sort__item  trip-sort__item--${type}">
           <input id="sort-${type}"
@@ -37,11 +38,11 @@ export default class SortView extends AbstractView {
 
     return `
       <form class="trip-events__trip-sort  trip-sort" action="#" method="get">
-        ${createSortItemTemplate('day', 'Day')}
-        ${createSortItemTemplate('event', 'Event', true)}
-        ${createSortItemTemplate('time', 'Time')}
-        ${createSortItemTemplate('price', 'Price', false, true)}
-        ${createSortItemTemplate('offer', 'Offers', true)}
+        ${createSortItemTemplate(SortType.DAY, 'Day', false, true)}
+        ${createSortItemTemplate(SortType.EVENT, 'Event', true)}
+        ${createSortItemTemplate(SortType.TIME, 'Time')}
+        ${createSortItemTemplate(SortType.PRICE, 'Price')}
+        ${createSortItemTemplate(SortType.OFFER, 'Offers', true)}
       </form>
     `;
   }
@@ -54,11 +55,8 @@ export default class SortView extends AbstractView {
     }
 
     const sortType = sortElement.dataset.sortType;
+    this.#onSortTypeChange(sortType);
 
-    if (sortType !== this.#currentSortType) {
-      this.#currentSortType = sortType;
-      this.#onSortTypeChange(sortType);
-    }
   };
 
 }

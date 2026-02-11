@@ -48,4 +48,4 @@ export const SortType = {
   OFFER: 'offer'
 };
 
-export const DEFAULT_SORT_TYPE = SortType.PRICE;
+export const DEFAULT_SORT_TYPE = SortType.DAY;
