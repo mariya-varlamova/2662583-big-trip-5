@@ -152,4 +152,10 @@ export default class RoutePointPresenter {
     }
   }
 
+  destroy() {
+    if (this.#listItem && this.#listItem.parentElement) {
+      this.#listItem.parentElement.removeChild(this.#listItem);
+    }
+    this.#removeEscKeyDownHandler();
+  }
 }
