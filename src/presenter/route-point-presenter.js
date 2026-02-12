@@ -48,7 +48,7 @@ export default class RoutePointPresenter {
 
     this.#editFormComponent.setFormSubmitHandler((evt) => {
       evt.preventDefault();
-      this.#replaceFormToPoint();
+      this.#handleFormSubmit();
     });
 
     this.#editFormComponent.setFormCloseHandler(() => {
@@ -65,6 +65,23 @@ export default class RoutePointPresenter {
     this.#listItem = listItem;
   }
 
+  #handleFormSubmit() {
+    const formState = this.#editFormComponent.getState();
+    const updatedPoint = {
+      ...this.#routePoint,
+      type: formState.type,
+      destinationId: formState.destinationId,
+      startDate: formState.startDate,
+      endDate: formState.endDate,
+      price: formState.price,
+      offers: formState.offers,
+      isFavorite: formState.isFavorite
+    };
+
+    this.#handleDataChange(updatedPoint);
+    this.#replaceFormToPoint();
+  }
+
   #handleFavoriteClick() {
     const updatedPoint = {
       ...this.#routePoint,
@@ -75,7 +92,6 @@ export default class RoutePointPresenter {
   }
 
   update(updatedPoint) {
-
     this.#routePoint = updatedPoint;
 
     const destination = this.#model.getDestinationById(updatedPoint.destinationId);
@@ -98,7 +114,7 @@ export default class RoutePointPresenter {
     });
 
     if (this.#editFormComponent.element?.parentElement === this.#listItem) {
-      replace(this.#routePointComponent, this.#editFormComponent);
+      this.#editFormComponent.setPoint(updatedPoint);
     } else if (prevComponent) {
       replace(this.#routePointComponent, prevComponent);
     }
