@@ -1,3 +1,9 @@
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import { DateFormat } from '../constants/constants.js';
+
+dayjs.extend(duration);
+
 export function getRandomArrayElement(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
@@ -14,42 +20,42 @@ export function getRandomDate() {
   return new Date(pastDate.getTime() + Math.random() * (futureDate.getTime() - pastDate.getTime()));
 }
 
-export function formatDate(date, format = 'DD/MM/YY HH:mm') {
+export function formatDate(date, format = DateFormat.DEFAULT) {
   if (!date){
     return '';
   }
 
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear().toString().slice(-2);
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-
-  return format
-    .replace('DD', day)
-    .replace('MM', month)
-    .replace('YY', year)
-    .replace('HH', hours)
-    .replace('mm', minutes);
+  return dayjs(date).format(format);
 }
 
 export function formatDuration(startDate, endDate) {
   if (!startDate || !endDate){
     return '';
   }
-  const diffMs = endDate.getTime() - startDate.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
+  const start = dayjs(startDate);
+  const end = dayjs(endDate);
 
-  if (diffDays > 0) {
-    const remainingHours = diffHours % 24;
-    const remainingMins = diffMins % 60;
-    return `${diffDays}D ${remainingHours}H ${remainingMins}M`;
-  } else if (diffHours > 0) {
-    const remainingMins = diffMins % 60;
-    return `${diffHours}H ${remainingMins}M`;
-  } else {
-    return `${diffMins}M`;
+  const diffMinutes = end.diff(start, 'minute');
+  const diffDays = end.diff(start, 'day');
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes}M`;
   }
+  if (diffDays < 1) {
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    const formattedHours = hours.toString().padStart(2, '0');
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+
+    return `${formattedHours}H ${formattedMinutes}M`;
+  }
+  const days = end.diff(start, 'day');
+  const remainingHours = Math.floor((diffMinutes % (24 * 60)) / 60);
+  const remainingMinutes = diffMinutes % 60;
+
+  const formattedDays = days.toString().padStart(2, '0');
+  const formattedRemainingHours = remainingHours.toString().padStart(2, '0');
+  const formattedRemainingMinutes = remainingMinutes.toString().padStart(2, '0');
+
+  return `${formattedDays}D ${formattedRemainingHours}H ${formattedRemainingMinutes}M`;
 }

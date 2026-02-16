@@ -26,18 +26,13 @@ export const LOREM_IPSUM = [
   'Nunc fermentum tortor ac porta dapibus.',
   'In rutrum ac purus sit amet tempus.'
 ];
-export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 export const DateFormat = {
   DEFAULT: 'DD/MM/YY HH:mm',
   DATETIME_ATTR: 'YYYY-MM-DDTHH:mm',
   DAY_ATTR: 'YYYY-MM-DD',
   MONTH_DAY: 'MMM D',
-  TIME: 'HH:mm',
-  HUMAN_MONTH_DAY: 'MMM D',
-  HUMAN_TIME: 'HH:mm',
-  HUMAN_FULL: 'YYYY-MM-DDTHH:mm:ss'
+  TIME: 'HH:mm'
 };
 
 export const SortType = {

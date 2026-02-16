@@ -1,5 +1,5 @@
 import { formatDate, formatDuration } from '../utils/utils.js';
-import { MONTHS, DateFormat } from '../constants/constants.js';
+import { DateFormat } from '../constants/constants.js';
 import AbstractView from '../framework/view/abstract-view.js';
 export default class RoutePointView extends AbstractView {
   #routePoint = null;
@@ -71,9 +71,7 @@ export default class RoutePointView extends AbstractView {
       return '';
     }
 
-    const day = date.getDate();
-    const month = MONTHS[date.getMonth()];
-    return `${month} ${day}`;
+    return formatDate(date, DateFormat.MONTH_DAY);
   }
 
   #getOffersTemplate() {
