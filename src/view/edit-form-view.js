@@ -22,6 +22,8 @@ export default class EditFormView extends AbstractStatefulView {
 
     this._state = this.createState(routePoint);
     this.#setInnerHandlers();
+
+    setTimeout(() => this.#initDatePickers(), 0);
   }
 
   get template() {
