@@ -1,6 +1,8 @@
 import { formatDate } from '../utils/utils.js';
 import { TYPES } from '../constants/constants.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 export default class EditFormView extends AbstractStatefulView {
   #routePoint = null;
   #destinations = [];
@@ -8,6 +10,8 @@ export default class EditFormView extends AbstractStatefulView {
   #isNew = false;
   #handleSubmit = null;
   #handleClose = null;
+  #startDatePicker = null;
+  #endDatePicker = null;
 
   constructor(routePoint = null, destinations = [], offerGroups = {}) {
     super();
@@ -18,6 +22,8 @@ export default class EditFormView extends AbstractStatefulView {
 
     this._state = this.createState(routePoint);
     this.#setInnerHandlers();
+
+    setTimeout(() => this.#initDatePickers(), 0);
   }
 
   get template() {
@@ -46,8 +52,74 @@ export default class EditFormView extends AbstractStatefulView {
 
   _restoreHandlers() {
     this.#setInnerHandlers();
+    this.#initDatePickers();
     this.setFormSubmitHandler(this.#handleSubmit);
     this.setFormCloseHandler(this.#handleClose);
+  }
+
+  removeElement() {
+    if (this.#startDatePicker) {
+      this.#startDatePicker.destroy();
+      this.#startDatePicker = null;
+    }
+    if (this.#endDatePicker) {
+      this.#endDatePicker.destroy();
+      this.#endDatePicker = null;
+    }
+    super.removeElement();
+  }
+
+  #initDatePickers() {
+    const startInput = this.element.querySelector('#event-start-time-1');
+    const endInput = this.element.querySelector('#event-end-time-1');
+
+    const commonConfig = {
+      enableTime: true,
+      dateFormat: 'd/m/y H:i',
+      ['time_24hr']: true,
+      allowInput: true,
+      locale: {
+        firstDayOfWeek: 1
+      }
+    };
+
+    if (startInput && !this.#startDatePicker) {
+      this.#startDatePicker = flatpickr(startInput, {
+        ...commonConfig,
+        defaultDate: this._state.startDate,
+        onChange: (selectedDates) => {
+          if (selectedDates[0]) {
+            this.updateElement({
+              startDate: selectedDates[0]
+            }, true);
+
+            if (selectedDates[0] > this._state.endDate) {
+              this.updateElement({
+                endDate: selectedDates[0]
+              }, true);
+
+              if (this.#endDatePicker) {
+                this.#endDatePicker.setDate(selectedDates[0]);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    if (endInput && !this.#endDatePicker) {
+      this.#endDatePicker = flatpickr(endInput, {
+        ...commonConfig,
+        defaultDate: this._state.endDate,
+        onChange: (selectedDates) => {
+          if (selectedDates[0]) {
+            this.updateElement({
+              endDate: selectedDates[0]
+            }, true);
+          }
+        }
+      });
+    }
   }
 
   #setInnerHandlers() {
