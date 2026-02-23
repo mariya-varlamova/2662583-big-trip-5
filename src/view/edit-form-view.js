@@ -1,5 +1,5 @@
 import { formatDate } from '../utils/utils.js';
-import { TYPES } from '../constants/constants.js';
+import { TYPES, AllowedKeys } from '../constants/constants.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -69,7 +69,11 @@ export default class EditFormView extends AbstractStatefulView {
     this.#setInnerHandlers();
     this.#initDatePickers();
     this.setFormSubmitHandler(this.#handleSubmit);
-    priceInput.addEventListener('blur', this.#priceBlurHandler);
+
+    if (priceInput) {
+      priceInput.addEventListener('blur', this.#priceBlurHandler);
+    }
+
     this.setFormCloseHandler(this.#handleClose);
 
     if (this.#handleDelete) {
@@ -172,11 +176,6 @@ export default class EditFormView extends AbstractStatefulView {
     offerCheckboxes.forEach((checkbox) => {
       checkbox.addEventListener('change', this.#offerChangeHandler);
     });
-
-    const offersContainer = this.element.querySelector('.event__available-offers');
-    if (offersContainer) {
-      offersContainer.addEventListener('blur', this.#offersBlurHandler, true);
-    }
   }
 
   #typeChangeHandler = (evt) => {
@@ -227,8 +226,7 @@ export default class EditFormView extends AbstractStatefulView {
   };
 
   #priceKeyPressHandler = (evt) => {
-    const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    if (!allowedKeys.includes(evt.key)) {
+    if (!AllowedKeys.includes(evt.key)) {
       evt.preventDefault();
     }
   };
@@ -244,37 +242,17 @@ export default class EditFormView extends AbstractStatefulView {
     if (!offer) {
       return;
     }
-    this.#tempOfferChanges = this.#tempOfferChanges || {};
-    this.#tempOfferChanges[offerId] = isChecked;
-  };
-
-  #offersBlurHandler = () => {
-    if (!this.#tempOfferChanges || Object.keys(this.#tempOfferChanges).length === 0){
-      return;
-    }
-
-    const offersForType = this.#offerGroups[this._state.type] || [];
     let updatedOffers = [...this._state.offers];
 
-    Object.entries(this.#tempOfferChanges).forEach(([offerId, isChecked]) => {
-      const offer = offersForType.find((o) => o.id === offerId);
-      if (!offer) {
-        return;
+    if (isChecked) {
+      if (!updatedOffers.some((o) => o.id === offerId)) {
+        updatedOffers.push(offer);
       }
-
-      if (isChecked) {
-        if (!updatedOffers.some((o) => o.id === offerId)) {
-          updatedOffers.push(offer);
-        }
-      } else {
-        updatedOffers = updatedOffers.filter((o) => o.id !== offerId);
-      }
-    });
-
+    } else {
+      updatedOffers = updatedOffers.filter((o) => o.id !== offerId);
+    }
     this.updateElement({ offers: updatedOffers }, false);
-    this.#tempOfferChanges = {};
   };
-
 
   createState(routePoint) {
     const point = routePoint || {
@@ -373,8 +351,19 @@ export default class EditFormView extends AbstractStatefulView {
 
   setFormCloseHandler(callback) {
     this.#handleClose = callback;
-    this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#handleClose);
+    const rollupBtn = this.element.querySelector('.event__rollup-btn');
+    if (rollupBtn) {
+      rollupBtn.addEventListener('click', this.#handleClose);
+    }
+    if (this.#isNew) {
+      const cancelBtn = this.element.querySelector('.event__reset-btn');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', (evt) => {
+          evt.preventDefault();
+          this.#handleClose();
+        });
+      }
+    }
   }
 
   #getPriceTemplate(price) {

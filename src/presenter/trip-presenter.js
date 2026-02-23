@@ -37,8 +37,13 @@ export default class TripPresenter {
       routePointsModel: this.#model
     });
 
-    this.#model.addObserver(this.#handleModelEvent);
-    this.#filtersModel.addObserver(this.#handleModelEvent);
+    this.#handleModelEvent = this.#handleModelEvent.bind(this);
+    this.#handleSortTypeChange = this.#handleSortTypeChange.bind(this);
+    this.#handleNewPointClick = this.#handleNewPointClick.bind(this);
+    this.#handleNewPointDestroy = this.#handleNewPointDestroy.bind(this);
+
+    this.#model.addObserver(this.#handleModelEvent.bind(this));
+    this.#filtersModel.addObserver(this.#handleModelEvent.bind(this));
   }
 
   init() {
@@ -82,12 +87,18 @@ export default class TripPresenter {
   #renderNewPointForm() {
     const emptyPoint = this.#model.getEmptyRoutePoint();
 
+    if (!this.#listComponent) {
+      this.#renderList();
+    }
+
+    this.#resetAllForms();
+
     const newPointPresenter = new RoutePointPresenter({
-      container: this.#listComponent ? this.#listComponent.element : this.#listContainer,
+      container: this.#listComponent.element,
       model: this.#model,
-      onDataChange: this.#handlePointDataChange,
-      onEditStart: this.#handleEditStart,
-      onDestroy: this.#handleNewPointDestroy
+      onDataChange: this.#handlePointDataChange.bind(this),
+      onEditStart: this.#handleEditStart.bind(this),
+      onDestroy: this.#handleNewPointDestroy.bind(this)
     });
 
     newPointPresenter.init(emptyPoint, true);
@@ -110,7 +121,7 @@ export default class TripPresenter {
 
     this.#sortComponent = new SortView({
       currentSortType: this.#currentSortType,
-      onSortTypeChange: this.#handleSortTypeChange
+      onSortTypeChange: this.#handleSortTypeChange.bind(this)
     });
 
     render(this.#sortComponent, this.#listContainer);
@@ -183,10 +194,6 @@ export default class TripPresenter {
   #clearRoutePoints() {
     this.#routePointPresenters.forEach((presenter) => presenter.destroy());
     this.#routePointPresenters.clear();
-
-    // if (this.#listComponent) {
-    //   this.#listComponent.element.innerHTML = '';
-    // }
   }
 
   #getFilteredPoints() {
@@ -224,6 +231,10 @@ export default class TripPresenter {
         break;
       case UserAction.ADD_POINT:
         this.#model.addRoutePoint(update);
+        if (this.#isCreating) {
+          this.#newPointPresenter?.destroy();
+          this.#handleNewPointDestroy();
+        }
         break;
       case UserAction.DELETE_POINT:
         this.#model.deleteRoutePoint(update.id);

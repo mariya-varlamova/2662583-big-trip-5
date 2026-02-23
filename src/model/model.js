@@ -48,9 +48,17 @@ export default class Model {
   }
 
   addRoutePoint(newPoint) {
-    this.#routePoints.push(newPoint);
-    this.#notifyObservers();
-    return newPoint;
+    const pointWithId = {
+      ...newPoint,
+      id: String(Date.now() + Math.random()),
+      type: newPoint.type || 'flight',
+      price: Number(newPoint.price) || 0,
+      offers: newPoint.offers || [],
+      isFavorite: false
+    };
+    this.#routePoints.push(pointWithId);
+    this.#notifyObservers(UpdateType.MAJOR);
+    return pointWithId;
   }
 
   deleteRoutePoint(pointId) {
