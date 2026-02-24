@@ -1,8 +1,8 @@
+import Observable from '../framework/observable.js';
 import { FilterType } from '../constants/constants.js';
 
-export default class FiltersModel {
+export default class FiltersModel extends Observable{
   #activeFilter = FilterType.EVERYTHING;
-  #observers = [];
 
   get activeFilter() {
     return this.#activeFilter;
@@ -13,18 +13,6 @@ export default class FiltersModel {
       return;
     }
     this.#activeFilter = filterType;
-    this.#notifyObservers();
-  }
-
-  addObserver(callback) {
-    this.#observers.push(callback);
-  }
-
-  removeObserver(callback) {
-    this.#observers = this.#observers.filter((observer) => observer !== callback);
-  }
-
-  #notifyObservers() {
-    this.#observers.forEach((observer) => observer());
+    this._notify();
   }
 }

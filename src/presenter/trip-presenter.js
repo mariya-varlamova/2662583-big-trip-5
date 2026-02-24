@@ -42,8 +42,8 @@ export default class TripPresenter {
     this.#handleNewPointClick = this.#handleNewPointClick.bind(this);
     this.#handleNewPointDestroy = this.#handleNewPointDestroy.bind(this);
 
-    this.#model.addObserver(this.#handleModelEvent.bind(this));
-    this.#filtersModel.addObserver(this.#handleModelEvent.bind(this));
+    this.#model.addObserver(this.#handleModelEvent);
+    this.#filtersModel.addObserver(this.#handleModelEvent);
   }
 
   init() {
@@ -124,7 +124,11 @@ export default class TripPresenter {
       onSortTypeChange: this.#handleSortTypeChange.bind(this)
     });
 
-    render(this.#sortComponent, this.#listContainer);
+    if (this.#listComponent) {
+      this.#listContainer.insertBefore(this.#sortComponent.element, this.#listComponent.element);
+    } else {
+      render(this.#sortComponent, this.#listContainer);
+    }
   }
 
   #renderRoutePoints() {
@@ -204,6 +208,10 @@ export default class TripPresenter {
 
   #handleModelEvent = (updateType) => {
     if (updateType === UpdateType.MAJOR) {
+      if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
+        this.#currentSortType = DEFAULT_SORT_TYPE;
+        this.#renderSort();
+      }
       if (this.#isCreating) {
         this.#newPointPresenter?.destroy();
         this.#handleNewPointDestroy();

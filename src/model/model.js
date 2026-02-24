@@ -1,13 +1,14 @@
+import Observable from '../framework/observable.js';
 import { generateMockData } from '../mocks/mock-data.js';
 import { UpdateType } from '../constants/constants.js';
 
-export default class Model {
+export default class Model extends Observable{
   #destinations = [];
   #routePoints = [];
   #offerGroups = {};
-  #observers = [];
 
   constructor() {
+    super();
     const mockData = generateMockData();
     this.#destinations = mockData.destinations;
     this.#routePoints = mockData.routePoints;
@@ -26,13 +27,9 @@ export default class Model {
     return this.#offerGroups;
   }
 
-  getRoutePoints() {
-    return this.#routePoints;
-  }
-
   setRoutePoints(points) {
     this.#routePoints = points;
-    this.#notifyObservers();
+    this._notifys(UpdateType.MAJOR);
   }
 
   updateRoutePoint(updatedPoint) {
@@ -43,7 +40,7 @@ export default class Model {
     }
 
     this.#routePoints[index] = updatedPoint;
-    this.#notifyObservers(UpdateType.MINOR);
+    this._notify(UpdateType.MINOR);
     return true;
   }
 
@@ -57,7 +54,7 @@ export default class Model {
       isFavorite: false
     };
     this.#routePoints.push(pointWithId);
-    this.#notifyObservers(UpdateType.MAJOR);
+    this._notify(UpdateType.MAJOR);
     return pointWithId;
   }
 
@@ -69,7 +66,7 @@ export default class Model {
     }
 
     this.#routePoints.splice(index, 1);
-    this.#notifyObservers(UpdateType.MAJOR);
+    this._notify(UpdateType.MAJOR);
     return true;
   }
 
@@ -97,17 +94,5 @@ export default class Model {
 
   getRoutePointById(id) {
     return this.#routePoints.find((point) => point.id === id);
-  }
-
-  addObserver(callback) {
-    this.#observers.push(callback);
-  }
-
-  removeObserver(callback) {
-    this.#observers = this.#observers.filter((observer) => observer !== callback);
-  }
-
-  #notifyObservers(updateType) {
-    this.#observers.forEach((observer) => observer(updateType));
   }
 }

@@ -1,5 +1,5 @@
 import { formatDate } from '../utils/utils.js';
-import { TYPES, AllowedKeys } from '../constants/constants.js';
+import { TYPES } from '../constants/constants.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -168,7 +168,6 @@ export default class EditFormView extends AbstractStatefulView {
     const priceInput = this.element.querySelector('.event__input--price');
     if (priceInput) {
       priceInput.addEventListener('input', this.#priceChangeHandler);
-      priceInput.addEventListener('keypress', this.#priceKeyPressHandler);
       priceInput.addEventListener('blur', this.#priceBlurHandler);
     }
 
@@ -222,12 +221,6 @@ export default class EditFormView extends AbstractStatefulView {
     const finalPrice = parseInt(evt.target.value, 10) || 0;
     if (this._state.price !== finalPrice) {
       this.updateElement({ price: finalPrice }, false);
-    }
-  };
-
-  #priceKeyPressHandler = (evt) => {
-    if (!AllowedKeys.includes(evt.key)) {
-      evt.preventDefault();
     }
   };
 
@@ -374,8 +367,9 @@ export default class EditFormView extends AbstractStatefulView {
           &euro;
         </label>
         <input class="event__input event__input--price" id="event-price-1"
-               type="text" name="event-price"
-               value="${price}">
+              type="number"  min="0" step="1"
+              type="text" name="event-price"
+              value="${price}">
       </div>
     `;
   }
