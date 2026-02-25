@@ -1,6 +1,7 @@
 import RoutePointView from '../view/route-point-view.js';
 import EditFormView from '../view/edit-form-view.js';
-import { render, replace } from '../framework/render.js';
+import { render, replace, remove } from '../framework/render.js';
+import { UserAction, UpdateType } from '../constants/constants.js';
 
 export default class RoutePointPresenter {
   #model = null;
@@ -11,17 +12,20 @@ export default class RoutePointPresenter {
   #escKeyDownHandler = null;
   #handleDataChange = null;
   #handleEditStart = null;
-  #listItem = null;
+  #handleDestroy = null;
+  #isNew = false;
 
-  constructor({container, model, onDataChange, onEditStart}){
+  constructor({container, model, onDataChange, onEditStart, onDestroy}){
     this.#container = container;
     this.#model = model;
     this.#handleDataChange = onDataChange;
     this.#handleEditStart = onEditStart;
+    this.#handleDestroy = onDestroy;
   }
 
-  init(routePoint){
+  init(routePoint, isNew = false) {
     this.#routePoint = routePoint;
+    this.#isNew = isNew;
 
     const destination = this.#model.getDestinationById(routePoint.destinationId);
     const offers = routePoint.offers;
@@ -35,7 +39,8 @@ export default class RoutePointPresenter {
     this.#editFormComponent = new EditFormView(
       routePoint,
       this.#model.destinations,
-      this.#model.offerGroups
+      this.#model.offerGroups,
+      this.#isNew
     );
 
     this.#routePointComponent.setEditClickHandler(() => {
@@ -52,28 +57,67 @@ export default class RoutePointPresenter {
     });
 
     this.#editFormComponent.setFormCloseHandler(() => {
-      this.#replaceFormToPoint();
+      this.#handleFormClose();
     });
 
-    const listItem = document.createElement('li');
-    listItem.className = 'trip-events__item';
+    if (!this.#isNew) {
+      this.#editFormComponent.setFormDeleteHandler(() => {
+        this.#handleDeleteClick();
+      });
+    }
 
-    render(this.#routePointComponent, listItem);
+    if (this.#isNew) {
+      const tempContainer = document.createElement('div');
+      render(this.#editFormComponent, tempContainer);
 
-    this.#container.appendChild(listItem);
-
-    this.#listItem = listItem;
+      if (this.#container.firstChild) {
+        this.#container.insertBefore(tempContainer.firstChild, this.#container.firstChild);
+      } else {
+        this.#container.appendChild(tempContainer.firstChild);
+      }
+      this.#setEscKeyDownHandler();
+    } else {
+      render(this.#routePointComponent, this.#container);
+    }
   }
 
   #handleFormSubmit() {
     const formState = this.#editFormComponent.getState();
+
+    if (this.#isNew && !formState.destinationId) {
+      return;
+    }
+
     const updatedPoint = {
       ...this.#routePoint,
-      ...formState
+      ...formState,
+      offers: formState.offers || [],
     };
 
-    this.#handleDataChange(updatedPoint);
-    this.#replaceFormToPoint();
+    if (this.#isNew) {
+      delete updatedPoint.id;
+    }
+
+    const actionType = this.#isNew ? UserAction.ADD_POINT : UserAction.UPDATE_POINT;
+    const updateType = this.#isNew ? UpdateType.MAJOR : UpdateType.MINOR;
+
+    this.#handleDataChange(actionType, updateType, updatedPoint);
+  }
+
+  #handleDeleteClick() {
+    if (this.#isNew) {
+      this.#destroy();
+      if (this.#handleDestroy) {
+        this.#handleDestroy();
+      }
+      return;
+    }
+
+    this.#handleDataChange(
+      UserAction.DELETE_POINT,
+      UpdateType.MAJOR,
+      this.#routePoint
+    );
   }
 
   #handleFavoriteClick() {
@@ -82,7 +126,22 @@ export default class RoutePointPresenter {
       isFavorite: !this.#routePoint.isFavorite
     };
 
-    this.#handleDataChange(updatedPoint);
+    this.#handleDataChange(
+      UserAction.UPDATE_POINT,
+      UpdateType.PATCH,
+      updatedPoint
+    );
+  }
+
+  #handleFormClose() {
+    if (this.#isNew) {
+      this.#destroy();
+      if (this.#handleDestroy) {
+        this.#handleDestroy();
+      }
+    } else {
+      this.#replaceFormToPoint();
+    }
   }
 
   update(updatedPoint) {
@@ -91,8 +150,7 @@ export default class RoutePointPresenter {
     const destination = this.#model.getDestinationById(updatedPoint.destinationId);
     const offers = updatedPoint.offers;
 
-    const prevComponent = this.#routePointComponent;
-
+    const prevRoutePointComponent = this.#routePointComponent;
     this.#routePointComponent = new RoutePointView(
       updatedPoint,
       destination,
@@ -107,33 +165,75 @@ export default class RoutePointPresenter {
       this.#handleFavoriteClick();
     });
 
-    if (this.#editFormComponent.element?.parentElement === this.#listItem) {
-      this.#editFormComponent.setPoint(updatedPoint);
-    } else if (prevComponent) {
-      replace(this.#routePointComponent, prevComponent);
+
+    const prevEditFormComponent = this.#editFormComponent;
+    this.#editFormComponent = new EditFormView(
+      updatedPoint,
+      this.#model.destinations,
+      this.#model.offerGroups,
+      this.#isNew
+    );
+
+    this.#editFormComponent.setFormSubmitHandler((evt) => {
+      evt.preventDefault();
+      this.#handleFormSubmit();
+    });
+
+    this.#editFormComponent.setFormCloseHandler(() => {
+      this.#handleFormClose();
+    });
+
+    if (!this.#isNew) {
+      this.#editFormComponent.setFormDeleteHandler(() => {
+        this.#handleDeleteClick();
+      });
     }
+
+    const isFormShown = this.#editFormComponent &&
+      this.#editFormComponent.element &&
+      this.#editFormComponent.element.parentElement === this.#container;
+
+    if (isFormShown) {
+      replace(this.#editFormComponent, prevEditFormComponent);
+      this.#setEscKeyDownHandler();
+    } else {
+      if (prevRoutePointComponent && prevRoutePointComponent.element.parentElement === this.#container) {
+        replace(this.#routePointComponent, prevRoutePointComponent);
+      }
+    }
+    remove(prevRoutePointComponent);
+    remove(prevEditFormComponent);
   }
 
   #replacePointToForm() {
-    if (this.#routePointComponent.element?.parentElement !== this.#listItem) {
+    if (!this.#routePointComponent || !this.#routePointComponent.element) {
       return;
     }
+
+    if (this.#routePointComponent.element.parentElement !== this.#container) {
+      return;
+    }
+
 
     if (this.#handleEditStart) {
       this.#handleEditStart(this.#routePoint.id);
     }
 
     replace(this.#editFormComponent, this.#routePointComponent);
-
     this.#setEscKeyDownHandler();
   }
 
-  #replaceFormToPoint(){
-    if (this.#editFormComponent.element?.parentElement !== this.#listItem) {
+  #replaceFormToPoint() {
+    if (!this.#editFormComponent || !this.#editFormComponent.element ||
+        !this.#routePointComponent || !this.#routePointComponent.element) {
       return;
     }
-    replace(this.#routePointComponent, this.#editFormComponent);
 
+    if (this.#editFormComponent.element.parentElement !== this.#container) {
+      return;
+    }
+
+    replace(this.#routePointComponent, this.#editFormComponent);
     this.#removeEscKeyDownHandler();
   }
 
@@ -142,7 +242,7 @@ export default class RoutePointPresenter {
     this.#escKeyDownHandler = (evt) => {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
-        this.#replaceFormToPoint();
+        this.#handleFormClose();
       }
     };
 
@@ -157,15 +257,36 @@ export default class RoutePointPresenter {
   }
 
   resetView() {
-    if (this.#editFormComponent && this.#editFormComponent.element.parentElement) {
+    if (this.#isNew) {
+      this.#destroy();
+      if (this.#handleDestroy) {
+        this.#handleDestroy();
+      }
+      return;
+    }
+
+    if (this.#editFormComponent &&
+        this.#editFormComponent.element &&
+        this.#editFormComponent.element.parentElement === this.#container) {
       this.#replaceFormToPoint();
     }
   }
 
   destroy() {
-    if (this.#listItem && this.#listItem.parentElement) {
-      this.#listItem.parentElement.removeChild(this.#listItem);
-    }
+    this.#destroy();
+  }
+
+  #destroy() {
     this.#removeEscKeyDownHandler();
+
+    if (this.#editFormComponent) {
+      remove(this.#editFormComponent);
+      this.#editFormComponent = null;
+    }
+
+    if (this.#routePointComponent) {
+      remove(this.#routePointComponent);
+      this.#routePointComponent = null;
+    }
   }
 }

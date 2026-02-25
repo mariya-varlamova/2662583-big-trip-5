@@ -1,12 +1,14 @@
+import Observable from '../framework/observable.js';
 import { generateMockData } from '../mocks/mock-data.js';
+import { UpdateType } from '../constants/constants.js';
 
-export default class Model {
+export default class Model extends Observable{
   #destinations = [];
   #routePoints = [];
   #offerGroups = {};
-  #observers = [];
 
   constructor() {
+    super();
     const mockData = generateMockData();
     this.#destinations = mockData.destinations;
     this.#routePoints = mockData.routePoints;
@@ -24,6 +26,50 @@ export default class Model {
   get offerGroups() {
     return this.#offerGroups;
   }
+
+  setRoutePoints(points) {
+    this.#routePoints = points;
+    this._notify(UpdateType.MAJOR);
+  }
+
+  updateRoutePoint(updatedPoint, updateType = UpdateType.PATCH) {
+    const index = this.#routePoints.findIndex((point) => point.id === updatedPoint.id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    this.#routePoints[index] = updatedPoint;
+    this._notify(updateType, updatedPoint);
+    return true;
+  }
+
+  addRoutePoint(newPoint, updateType = UpdateType.MAJOR) {
+    const pointWithId = {
+      ...newPoint,
+      id: String(Date.now() + Math.random()),
+      type: newPoint.type || 'flight',
+      price: Number(newPoint.price) || 0,
+      offers: newPoint.offers || [],
+      isFavorite: false
+    };
+    this.#routePoints.push(pointWithId);
+    this._notify(updateType, pointWithId);
+    return pointWithId;
+  }
+
+  deleteRoutePoint(pointId, updateType = UpdateType.MAJOR) {
+    const index = this.#routePoints.findIndex((point) => point.id === pointId);
+
+    if (index === -1) {
+      return false;
+    }
+
+    this.#routePoints.splice(index, 1);
+    this._notify(updateType, { id: pointId });
+    return true;
+  }
+
 
   getOffersByType(type) {
     return this.#offerGroups[type] || [];
@@ -46,22 +92,7 @@ export default class Model {
     };
   }
 
-  updateRoutePoint(updatedPoint) {
-    const index = this.#routePoints.findIndex((point) => point.id === updatedPoint.id);
-
-    if (index === -1) {
-      return false;
-    }
-
-    this.#routePoints[index] = updatedPoint;
-    return true;
-  }
-
   getRoutePointById(id) {
     return this.#routePoints.find((point) => point.id === id);
-  }
-
-  addObserver(callback) {
-    this.#observers.push(callback);
   }
 }
