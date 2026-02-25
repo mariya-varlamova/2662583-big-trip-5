@@ -206,18 +206,38 @@ export default class TripPresenter {
     return filter[activeFilter](points);
   }
 
-  #handleModelEvent = (updateType) => {
-    if (updateType === UpdateType.MAJOR) {
-      if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
-        this.#currentSortType = DEFAULT_SORT_TYPE;
-        this.#renderSort();
-      }
-      if (this.#isCreating) {
-        this.#newPointPresenter?.destroy();
-        this.#handleNewPointDestroy();
-      }
+  #handleModelEvent = (updateType, data) => {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        if (data?.id) {
+          const presenter = this.#routePointPresenters.get(data.id);
+          if (presenter) {
+            presenter.update(data);
+          }
+        }
+        break;
+
+      case UpdateType.MINOR:
+        this.#renderRoutePoints();
+        break;
+      case UpdateType.MAJOR:
+        if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
+          this.#currentSortType = DEFAULT_SORT_TYPE;
+          this.#renderSort();
+        }
+        if (this.#isCreating) {
+          this.#newPointPresenter?.destroy();
+          this.#handleNewPointDestroy();
+        }
+        this.#renderRoutePoints();
+        break;
+      default:
+        if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
+          this.#currentSortType = DEFAULT_SORT_TYPE;
+          this.#renderSort();
+        }
+        this.#renderRoutePoints();
     }
-    this.#renderRoutePoints();
   };
 
   #handleSortTypeChange = (sortType) => {
@@ -235,17 +255,17 @@ export default class TripPresenter {
   #handlePointDataChange(actionType, updateType, update) {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#model.updateRoutePoint(update);
+        this.#model.updateRoutePoint(update, updateType);
         break;
       case UserAction.ADD_POINT:
-        this.#model.addRoutePoint(update);
+        this.#model.addRoutePoint(update, updateType);
         if (this.#isCreating) {
           this.#newPointPresenter?.destroy();
           this.#handleNewPointDestroy();
         }
         break;
       case UserAction.DELETE_POINT:
-        this.#model.deleteRoutePoint(update.id);
+        this.#model.deleteRoutePoint(update.id, updateType);
         break;
     }
   }

@@ -29,10 +29,10 @@ export default class Model extends Observable{
 
   setRoutePoints(points) {
     this.#routePoints = points;
-    this._notifys(UpdateType.MAJOR);
+    this._notify(UpdateType.MAJOR);
   }
 
-  updateRoutePoint(updatedPoint) {
+  updateRoutePoint(updatedPoint, updateType = UpdateType.PATCH) {
     const index = this.#routePoints.findIndex((point) => point.id === updatedPoint.id);
 
     if (index === -1) {
@@ -40,11 +40,11 @@ export default class Model extends Observable{
     }
 
     this.#routePoints[index] = updatedPoint;
-    this._notify(UpdateType.MINOR);
+    this._notify(updateType, updatedPoint);
     return true;
   }
 
-  addRoutePoint(newPoint) {
+  addRoutePoint(newPoint, updateType = UpdateType.MAJOR) {
     const pointWithId = {
       ...newPoint,
       id: String(Date.now() + Math.random()),
@@ -54,11 +54,11 @@ export default class Model extends Observable{
       isFavorite: false
     };
     this.#routePoints.push(pointWithId);
-    this._notify(UpdateType.MAJOR);
+    this._notify(updateType, pointWithId);
     return pointWithId;
   }
 
-  deleteRoutePoint(pointId) {
+  deleteRoutePoint(pointId, updateType = UpdateType.MAJOR) {
     const index = this.#routePoints.findIndex((point) => point.id === pointId);
 
     if (index === -1) {
@@ -66,7 +66,7 @@ export default class Model extends Observable{
     }
 
     this.#routePoints.splice(index, 1);
-    this._notify(UpdateType.MAJOR);
+    this._notify(updateType, { id: pointId });
     return true;
   }
 
